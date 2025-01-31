@@ -1,1 +1,1 @@
-from .LambPDF import LambPDF
+from LambPDF.LambPDF import LambPDF as LambPDF

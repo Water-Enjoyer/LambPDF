@@ -1,4 +1,5 @@
 import boto3
+from botocore.client import BaseClient
 import pypdf
 import pdfrw
 import tempfile
@@ -7,22 +8,38 @@ from fillpdf import fillpdfs
 
 
 class LambPDF():
+    def __init__(self, s3_client: BaseClient | None = None):
+        self.s3_client: BaseClient = s3_client or boto3.client('s3')
 
     def get_pdf_buffer_from_s3(
             self,
-            s3_client: boto3.client,
             bucket_name: str,
             s3_key: str
     ) -> BytesIO:
         """
         Returns BytesIO of the PDF from S3
         """
-        response = s3_client.get_object(
+        response = self.s3_client.get_object(
             Bucket=bucket_name,
             Key=s3_key
         )
         return BytesIO(
             response['Body'].read()
+        )
+
+    def write_pdf_buffer_to_s3(
+            self,
+            bucket_name: str,
+            s3_key: str,
+            pdf_buffer: BytesIO
+    ) -> dict:
+        """
+        Writes PDF buffer to S3
+        """
+        return self.s3_client.put_object(
+            Bucket=bucket_name,
+            Key=s3_key,
+            Body=pdf_buffer.getvalue()
         )
 
     def write_fillable_pdf_buffer(
