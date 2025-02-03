@@ -179,3 +179,27 @@ class LambPDF():
         writer.write(output_buffer)
         output_buffer.seek(0)
         return output_buffer
+
+    def overlay_form_fields(
+        self,
+        background_buffer: BytesIO,
+        form_buffer: BytesIO,
+    ) -> BytesIO:
+        """
+        Overlays form_buffer on top of background_buffer
+        Returns BytesIO of the PDF with form fields overlaid
+        """
+        scanned_pdf = pdfrw.PdfReader(fdata=background_buffer.getvalue())
+        form_pdf = pdfrw.PdfReader(fdata=form_buffer.getvalue())
+
+        for scanned_page, form_page in zip(scanned_pdf.pages, form_pdf.pages):
+            if hasattr(form_page, 'Annots') and form_page.Annots:
+                if hasattr(scanned_page, 'Annots') and scanned_page.Annots:
+                    scanned_page.Annots.extend(form_page.Annots)
+                else:
+                    scanned_page.Annots = form_page.Annots
+
+        output_buffer = BytesIO()
+        pdfrw.PdfWriter().write(output_buffer, scanned_pdf)
+        output_buffer.seek(0)
+        return output_buffer
